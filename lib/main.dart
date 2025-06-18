@@ -1,4 +1,5 @@
 import 'package:emerge_homely/admin/admin_login.dart';
+import 'package:emerge_homely/authwrapper.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
         useMaterial3: true,
       ),
-      home: AdminLogin(),
+      home: AuthWrapper(),
     );
   }
 }
