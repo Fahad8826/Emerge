@@ -1,5 +1,5 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:emerge_homely/pages/home.dart';
+import 'package:emerge_homely/pages/home/location.dart';
 import 'package:emerge_homely/pages/order.dart';
 import 'package:emerge_homely/pages/profile.dart';
 import 'package:emerge_homely/pages/wallet.dart';

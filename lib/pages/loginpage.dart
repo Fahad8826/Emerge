@@ -184,7 +184,6 @@ class _LogInState extends State<LogIn> with SingleTickerProviderStateMixin {
             return GestureDetector(
               onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: screenHeight),
                   child: IntrinsicHeight(

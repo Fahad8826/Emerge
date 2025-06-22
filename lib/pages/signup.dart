@@ -195,7 +195,8 @@
 // }
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emerge_homely/pages/bottomnav.dart';
-import 'package:emerge_homely/pages/login.dart';
+
+import 'package:emerge_homely/pages/loginpage.dart';
 import 'package:emerge_homely/widget/widget_support.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
