@@ -19,11 +19,46 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
   bool _isLoadingFoodItems = false;
   double _selectedDistance = 50.0; // Default 50km
   List<double> _distanceOptions = [5.0, 10.0, 25.0, 50.0, 100.0];
-
+  String? _userName;
+  bool _isLoadingUserName = true;
   @override
   void initState() {
     super.initState();
     _getUserLocation();
+    _fetchUserName();
+  }
+
+  Future<void> _fetchUserName() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        if (doc.exists) {
+          setState(() {
+            _userName = doc.get('name') as String? ?? 'User';
+            _isLoadingUserName = false;
+          });
+        } else {
+          setState(() {
+            _userName = 'User';
+            _isLoadingUserName = false;
+          });
+        }
+      } else {
+        setState(() {
+          _userName = 'Guest';
+          _isLoadingUserName = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _userName = 'User';
+        _isLoadingUserName = false;
+      });
+    }
   }
 
   Future<void> _getUserLocation() async {
@@ -342,538 +377,43 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // return Scaffold(
-    //   body: SingleChildScrollView(
-    //     child: Container(
-    //       margin: EdgeInsets.only(top: 50.0, left: 20.0),
-    //       child: Column(
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           Row(
-    //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    //             children: [
-    //               Text("Hello Shivam,", style: AppWidget.boldTextFeildStyle()),
-    //               Container(
-    //                 margin: EdgeInsets.only(right: 20.0),
-    //                 padding: EdgeInsets.all(3),
-    //                 decoration: BoxDecoration(
-    //                   color: Colors.black,
-    //                   borderRadius: BorderRadius.circular(8),
-    //                 ),
-    //                 child: Icon(
-    //                   Icons.shopping_cart_outlined,
-    //                   color: Colors.white,
-    //                 ),
-    //               ),
-    //             ],
-    //           ),
-    //           SizedBox(height: 20.0),
-    //           Text(
-    //             "Nearby Delicious Food",
-    //             style: AppWidget.HeadlineTextFeildStyle(),
-    //           ),
-    //           Text(
-    //             "Discover food items near you",
-    //             style: AppWidget.LightTextFeildStyle(),
-    //           ),
-    //           SizedBox(height: 20.0),
-
-    //           // Distance Filter
-    //           Container(
-    //             margin: EdgeInsets.only(right: 20.0),
-    //             child: Row(
-    //               children: [
-    //                 Text("Within: ", style: AppWidget.semiBoldTextFeildStyle()),
-    //                 DropdownButton<double>(
-    //                   value: _selectedDistance,
-    //                   items: _distanceOptions.map((distance) {
-    //                     return DropdownMenuItem<double>(
-    //                       value: distance,
-    //                       child: Text("${distance.toInt()} km"),
-    //                     );
-    //                   }).toList(),
-    //                   onChanged: (value) {
-    //                     setState(() {
-    //                       _selectedDistance = value!;
-    //                     });
-    //                     if (_currentPosition != null) {
-    //                       _loadFoodItemsWithDistance();
-    //                     }
-    //                   },
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //           SizedBox(height: 20.0),
-
-    //           // Category Filter
-    //           Container(
-    //             margin: EdgeInsets.only(right: 20.0),
-    //             child: showItem(),
-    //           ),
-    //           SizedBox(height: 30.0),
-
-    //           // Current Location Display (for debugging)
-    //           if (_currentPosition != null)
-    //             Container(
-    //               margin: EdgeInsets.only(right: 20.0, bottom: 20.0),
-    //               padding: EdgeInsets.all(10),
-    //               decoration: BoxDecoration(
-    //                 color: Colors.blue[50],
-    //                 borderRadius: BorderRadius.circular(10),
-    //               ),
-    //               child: Row(
-    //                 children: [
-    //                   Icon(Icons.my_location, size: 16, color: Colors.blue),
-    //                   SizedBox(width: 8),
-    //                   Expanded(
-    //                     child: Text(
-    //                       "Your location: ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}",
-    //                       style: TextStyle(
-    //                         fontSize: 12,
-    //                         color: Colors.blue[700],
-    //                       ),
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //             ),
-
-    //           // Food Items List
-    //           _isLoadingLocation
-    //               ? Center(
-    //                   child: Column(
-    //                     children: [
-    //                       CircularProgressIndicator(),
-    //                       SizedBox(height: 16),
-    //                       Text(
-    //                         "Getting your location...",
-    //                         style: AppWidget.LightTextFeildStyle(),
-    //                       ),
-    //                     ],
-    //                   ),
-    //                 )
-    //               : _currentPosition == null
-    //               ? Center(
-    //                   child: Column(
-    //                     children: [
-    //                       Icon(
-    //                         Icons.location_off,
-    //                         size: 80,
-    //                         color: Colors.grey[400],
-    //                       ),
-    //                       SizedBox(height: 16),
-    //                       Text(
-    //                         "Location access denied",
-    //                         style: AppWidget.LightTextFeildStyle(),
-    //                       ),
-    //                       SizedBox(height: 8),
-    //                       Text(
-    //                         "Please enable location to see nearby food items",
-    //                         style: AppWidget.LightTextFeildStyle(),
-    //                       ),
-    //                     ],
-    //                   ),
-    //                 )
-    //               : _isLoadingFoodItems
-    //               ? Center(
-    //                   child: Column(
-    //                     children: [
-    //                       CircularProgressIndicator(),
-    //                       SizedBox(height: 16),
-    //                       Text(
-    //                         "Finding nearby food items...",
-    //                         style: AppWidget.LightTextFeildStyle(),
-    //                       ),
-    //                     ],
-    //                   ),
-    //                 )
-    //               : _foodItemsWithDistance.isEmpty
-    //               ? Center(
-    //                   child: Column(
-    //                     children: [
-    //                       Icon(
-    //                         Icons.restaurant_menu,
-    //                         size: 80,
-    //                         color: Colors.grey[400],
-    //                       ),
-    //                       SizedBox(height: 16),
-    //                       Text(
-    //                         'No food items found within ${_selectedDistance.toInt()} km',
-    //                         style: AppWidget.LightTextFeildStyle(),
-    //                       ),
-    //                       SizedBox(height: 8),
-    //                       Text(
-    //                         'Try increasing the distance or check different categories',
-    //                         style: AppWidget.LightTextFeildStyle(),
-    //                       ),
-    //                     ],
-    //                   ),
-    //                 )
-    //               : Column(
-    //                   children: [
-    //                     // Show total count
-    //                     Container(
-    //                       margin: EdgeInsets.only(right: 20.0, bottom: 20.0),
-    //                       child: Row(
-    //                         children: [
-    //                           Icon(
-    //                             Icons.restaurant,
-    //                             size: 16,
-    //                             color: Colors.green,
-    //                           ),
-    //                           SizedBox(width: 8),
-    //                           Text(
-    //                             "${_foodItemsWithDistance.length} food items found nearby",
-    //                             style: AppWidget.semiBoldTextFeildStyle(),
-    //                           ),
-    //                         ],
-    //                       ),
-    //                     ),
-
-    //                     // Horizontal scroll for featured items (top 5 nearest)
-    //                     Container(
-    //                       height: 270,
-    //                       child: ListView.builder(
-    //                         scrollDirection: Axis.horizontal,
-    //                         itemCount: _foodItemsWithDistance.length > 5
-    //                             ? 5
-    //                             : _foodItemsWithDistance.length,
-    //                         itemBuilder: (context, index) {
-    //                           var data = _foodItemsWithDistance[index];
-    //                           return GestureDetector(
-    //                             onTap: () {
-    //                               Navigator.push(
-    //                                 context,
-    //                                 MaterialPageRoute(
-    //                                   builder: (context) =>
-    //                                       FoodItemDetails(foodData: data),
-    //                                 ),
-    //                               );
-    //                             },
-    //                             child: Container(
-    //                               margin: EdgeInsets.only(right: 15.0),
-    //                               width: 200,
-    //                               child: Material(
-    //                                 elevation: 5.0,
-    //                                 borderRadius: BorderRadius.circular(20),
-    //                                 child: Container(
-    //                                   padding: EdgeInsets.all(14),
-    //                                   child: Column(
-    //                                     crossAxisAlignment:
-    //                                         CrossAxisAlignment.start,
-    //                                     children: [
-    //                                       // Nearest badge for first item
-    //                                       if (index == 0)
-    //                                         Container(
-    //                                           padding: EdgeInsets.symmetric(
-    //                                             horizontal: 8,
-    //                                             vertical: 4,
-    //                                           ),
-    //                                           decoration: BoxDecoration(
-    //                                             color: Colors.green,
-    //                                             borderRadius:
-    //                                                 BorderRadius.circular(12),
-    //                                           ),
-    //                                           child: Text(
-    //                                             "NEAREST",
-    //                                             style: TextStyle(
-    //                                               color: Colors.white,
-    //                                               fontSize: 10,
-    //                                               fontWeight: FontWeight.bold,
-    //                                             ),
-    //                                           ),
-    //                                         ),
-    //                                       SizedBox(height: index == 0 ? 8 : 0),
-    //                                       ClipRRect(
-    //                                         borderRadius: BorderRadius.circular(
-    //                                           10,
-    //                                         ),
-    //                                         child: Container(
-    //                                           height: 120,
-    //                                           width: double.infinity,
-    //                                           child:
-    //                                               data['images'] != null &&
-    //                                                   data['images'].isNotEmpty
-    //                                               ? Image.network(
-    //                                                   data['images'][0],
-    //                                                   fit: BoxFit.cover,
-    //                                                   errorBuilder:
-    //                                                       (
-    //                                                         context,
-    //                                                         error,
-    //                                                         stackTrace,
-    //                                                       ) {
-    //                                                         return Container(
-    //                                                           color: Colors
-    //                                                               .grey[200],
-    //                                                           child: Icon(
-    //                                                             Icons
-    //                                                                 .restaurant,
-    //                                                             size: 40,
-    //                                                             color: Colors
-    //                                                                 .grey[400],
-    //                                                           ),
-    //                                                         );
-    //                                                       },
-    //                                                 )
-    //                                               : Container(
-    //                                                   color: Colors.grey[200],
-    //                                                   child: Icon(
-    //                                                     Icons.restaurant,
-    //                                                     size: 40,
-    //                                                     color: Colors.grey[400],
-    //                                                   ),
-    //                                                 ),
-    //                                         ),
-    //                                       ),
-    //                                       SizedBox(height: 8),
-    //                                       Text(
-    //                                         data['name'] ?? 'Unknown Item',
-    //                                         style:
-    //                                             AppWidget.semiBoldTextFeildStyle(),
-    //                                         maxLines: 1,
-    //                                         overflow: TextOverflow.ellipsis,
-    //                                       ),
-    //                                       SizedBox(height: 5.0),
-    //                                       Row(
-    //                                         children: [
-    //                                           Icon(
-    //                                             Icons.location_on,
-    //                                             size: 14,
-    //                                             color: Colors.red,
-    //                                           ),
-    //                                           SizedBox(width: 4),
-    //                                           Expanded(
-    //                                             child: Text(
-    //                                               "${data['distance'].toStringAsFixed(1)} km away",
-    //                                               style:
-    //                                                   AppWidget.LightTextFeildStyle(),
-    //                                             ),
-    //                                           ),
-    //                                         ],
-    //                                       ),
-    //                                       SizedBox(height: 5.0),
-    //                                       Text(
-    //                                         "₹${data['price']?.toStringAsFixed(0) ?? '0'}",
-    //                                         style:
-    //                                             AppWidget.semiBoldTextFeildStyle(),
-    //                                       ),
-    //                                     ],
-    //                                   ),
-    //                                 ),
-    //                               ),
-    //                             ),
-    //                           );
-    //                         },
-    //                       ),
-    //                     ),
-    //                     SizedBox(height: 30.0),
-
-    //                     // Vertical list for all items
-    //                     ListView.builder(
-    //                       shrinkWrap: true,
-    //                       physics: NeverScrollableScrollPhysics(),
-    //                       itemCount: _foodItemsWithDistance.length,
-    //                       itemBuilder: (context, index) {
-    //                         var data = _foodItemsWithDistance[index];
-    //                         return GestureDetector(
-    //                           onTap: () {
-    //                             Navigator.push(
-    //                               context,
-    //                               MaterialPageRoute(
-    //                                 builder: (context) =>
-    //                                     FoodItemDetails(foodData: data),
-    //                               ),
-    //                             );
-    //                           },
-    //                           child: Container(
-    //                             margin: EdgeInsets.only(
-    //                               right: 20.0,
-    //                               bottom: 20.0,
-    //                             ),
-    //                             child: Material(
-    //                               elevation: 5.0,
-    //                               borderRadius: BorderRadius.circular(20),
-    //                               child: Container(
-    //                                 padding: EdgeInsets.all(10),
-    //                                 child: Row(
-    //                                   crossAxisAlignment:
-    //                                       CrossAxisAlignment.start,
-    //                                   children: [
-    //                                     ClipRRect(
-    //                                       borderRadius: BorderRadius.circular(
-    //                                         10,
-    //                                       ),
-    //                                       child: Container(
-    //                                         height: 120,
-    //                                         width: 120,
-    //                                         child:
-    //                                             data['images'] != null &&
-    //                                                 data['images'].isNotEmpty
-    //                                             ? Image.network(
-    //                                                 data['images'][0],
-    //                                                 fit: BoxFit.cover,
-    //                                                 errorBuilder:
-    //                                                     (
-    //                                                       context,
-    //                                                       error,
-    //                                                       stackTrace,
-    //                                                     ) {
-    //                                                       return Container(
-    //                                                         color: Colors
-    //                                                             .grey[200],
-    //                                                         child: Icon(
-    //                                                           Icons.restaurant,
-    //                                                           size: 40,
-    //                                                           color: Colors
-    //                                                               .grey[400],
-    //                                                         ),
-    //                                                       );
-    //                                                     },
-    //                                               )
-    //                                             : Container(
-    //                                                 color: Colors.grey[200],
-    //                                                 child: Icon(
-    //                                                   Icons.restaurant,
-    //                                                   size: 40,
-    //                                                   color: Colors.grey[400],
-    //                                                 ),
-    //                                               ),
-    //                                       ),
-    //                                     ),
-    //                                     SizedBox(width: 20.0),
-    //                                     Expanded(
-    //                                       child: Column(
-    //                                         crossAxisAlignment:
-    //                                             CrossAxisAlignment.start,
-    //                                         children: [
-    //                                           Row(
-    //                                             children: [
-    //                                               Expanded(
-    //                                                 child: Text(
-    //                                                   data['name'] ??
-    //                                                       'Unknown Item',
-    //                                                   style:
-    //                                                       AppWidget.semiBoldTextFeildStyle(),
-    //                                                 ),
-    //                                               ),
-    //                                               if (index == 0)
-    //                                                 Container(
-    //                                                   padding:
-    //                                                       EdgeInsets.symmetric(
-    //                                                         horizontal: 6,
-    //                                                         vertical: 2,
-    //                                                       ),
-    //                                                   decoration: BoxDecoration(
-    //                                                     color: Colors.green,
-    //                                                     borderRadius:
-    //                                                         BorderRadius.circular(
-    //                                                           8,
-    //                                                         ),
-    //                                                   ),
-    //                                                   child: Text(
-    //                                                     "NEAREST",
-    //                                                     style: TextStyle(
-    //                                                       color: Colors.white,
-    //                                                       fontSize: 8,
-    //                                                       fontWeight:
-    //                                                           FontWeight.bold,
-    //                                                     ),
-    //                                                   ),
-    //                                                 ),
-    //                                             ],
-    //                                           ),
-    //                                           SizedBox(height: 5.0),
-    //                                           Text(
-    //                                             data['description'] ??
-    //                                                 'No description available',
-    //                                             style:
-    //                                                 AppWidget.LightTextFeildStyle(),
-    //                                             maxLines: 2,
-    //                                             overflow: TextOverflow.ellipsis,
-    //                                           ),
-    //                                           SizedBox(height: 5.0),
-    //                                           Row(
-    //                                             children: [
-    //                                               Icon(
-    //                                                 Icons.location_on,
-    //                                                 size: 16,
-    //                                                 color: Colors.red,
-    //                                               ),
-    //                                               SizedBox(width: 4),
-    //                                               Expanded(
-    //                                                 child: Text(
-    //                                                   "${data['distance'].toStringAsFixed(1)} km • ${data['vendorLocation'] ?? 'Unknown Location'}",
-    //                                                   style:
-    //                                                       AppWidget.LightTextFeildStyle(),
-    //                                                   maxLines: 1,
-    //                                                   overflow:
-    //                                                       TextOverflow.ellipsis,
-    //                                                 ),
-    //                                               ),
-    //                                             ],
-    //                                           ),
-    //                                           SizedBox(height: 5.0),
-    //                                           Row(
-    //                                             mainAxisAlignment:
-    //                                                 MainAxisAlignment
-    //                                                     .spaceBetween,
-    //                                             children: [
-    //                                               Text(
-    //                                                 "₹${data['price']?.toStringAsFixed(0) ?? '0'}",
-    //                                                 style:
-    //                                                     AppWidget.semiBoldTextFeildStyle(),
-    //                                               ),
-    //                                               Text(
-    //                                                 "From ${data['locationSource']}",
-    //                                                 style: TextStyle(
-    //                                                   fontSize: 10,
-    //                                                   color: Colors.grey[600],
-    //                                                 ),
-    //                                               ),
-    //                                             ],
-    //                                           ),
-    //                                         ],
-    //                                       ),
-    //                                     ),
-    //                                   ],
-    //                                 ),
-    //                               ),
-    //                             ),
-    //                           ),
-    //                         );
-    //                       },
-    //                     ),
-    //                   ],
-    //                 ),
-    //         ],
-    //       ),
-    //     ),
-    //   ),
-    // );
-
-    Scaffold(
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
       body: SingleChildScrollView(
         child: Container(
-          margin: EdgeInsets.only(top: 50.0, left: 20.0),
+          margin: EdgeInsets.only(top: 50.0, left: 20.0, right: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Hello Shivam,", style: AppWidget.boldTextFeildStyle()),
+                  _isLoadingUserName
+                      ? Text(
+                          "Hello, Loading...",
+                          style: AppWidget.boldTextFeildStyle(),
+                        )
+                      : Text(
+                          "Hello, $_userName",
+                          style: AppWidget.boldTextFeildStyle(),
+                        ),
                   Container(
-                    margin: EdgeInsets.only(right: 20.0),
-                    padding: EdgeInsets.all(3),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Icon(
                       Icons.shopping_cart_outlined,
                       color: Colors.white,
+                      size: 24,
                     ),
                   ),
                 ],
@@ -881,17 +421,21 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
               SizedBox(height: 20.0),
               Text(
                 "Nearby Delicious Food",
-                style: AppWidget.HeadlineTextFeildStyle(),
+                style: AppWidget.HeadlineTextFeildStyle().copyWith(
+                  color: Colors.black87,
+                  fontSize: 28,
+                ),
               ),
               Text(
                 "Discover food items near you",
-                style: AppWidget.LightTextFeildStyle(),
+                style: AppWidget.LightTextFeildStyle().copyWith(
+                  color: Colors.grey[700],
+                ),
               ),
               SizedBox(height: 20.0),
 
               // Distance Filter
               Container(
-                margin: EdgeInsets.only(right: 20.0),
                 child: Row(
                   children: [
                     Text("Within: ", style: AppWidget.semiBoldTextFeildStyle()),
@@ -900,7 +444,10 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                       items: _distanceOptions.map((distance) {
                         return DropdownMenuItem<double>(
                           value: distance,
-                          child: Text("${distance.toInt()} km"),
+                          child: Text(
+                            "${distance.toInt()} km",
+                            style: TextStyle(fontSize: 14),
+                          ),
                         );
                       }).toList(),
                       onChanged: (value) {
@@ -911,6 +458,9 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                           _loadFoodItemsWithDistance();
                         }
                       },
+                      style: AppWidget.semiBoldTextFeildStyle(),
+                      dropdownColor: Colors.white,
+                      underline: Container(height: 1, color: Colors.grey[400]),
                     ),
                   ],
                 ),
@@ -919,17 +469,18 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
 
               // Food Type Categories Horizontal List
               Container(
-                margin: EdgeInsets.only(right: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       "Food Categories",
-                      style: AppWidget.semiBoldTextFeildStyle(),
+                      style: AppWidget.semiBoldTextFeildStyle().copyWith(
+                        fontSize: 18,
+                      ),
                     ),
-                    SizedBox(height: 10.0),
+                    SizedBox(height: 12.0),
                     Container(
-                      height: 50,
+                      height: 100,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: _foodTypes.length,
@@ -944,43 +495,48 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                               });
                             },
                             child: Container(
-                              margin: EdgeInsets.only(right: 15.0),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 20.0,
-                                vertical: 10.0,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected ? Colors.black : Colors.white,
-                                borderRadius: BorderRadius.circular(25),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Colors.black
-                                      : Colors.grey[300]!,
-                                  width: 1,
-                                ),
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 4,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  foodType,
-                                  style: TextStyle(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.black,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    fontSize: 14,
+                              width: 80,
+                              margin: EdgeInsets.only(right: 12.0),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    height: 60,
+                                    width: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? Colors.black87
+                                          : Colors.grey[300]!,
+                                      width: isSelected ? 2 : 1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                ),
+                                  child: _getCategoryIcon(foodType),
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    foodType,
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.black87
+                                          : Colors.grey[600],
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      fontSize: 12,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -993,44 +549,18 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
               SizedBox(height: 20.0),
 
               // Category Filter (existing)
-              Container(
-                margin: EdgeInsets.only(right: 20.0),
-                child: showItem(),
-              ),
               SizedBox(height: 30.0),
-
-              // Current Location Display (for debugging)
-              if (_currentPosition != null)
-                Container(
-                  margin: EdgeInsets.only(right: 20.0, bottom: 20.0),
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.my_location, size: 16, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "Your location: ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.blue[700],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
 
               // Food Items List
               _isLoadingLocation
                   ? Center(
                       child: Column(
                         children: [
-                          CircularProgressIndicator(),
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.black87,
+                            ),
+                          ),
                           SizedBox(height: 16),
                           Text(
                             "Getting your location...",
@@ -1065,7 +595,11 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                   ? Center(
                       child: Column(
                         children: [
-                          CircularProgressIndicator(),
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.black87,
+                            ),
+                          ),
                           SizedBox(height: 16),
                           Text(
                             "Finding nearby food items...",
@@ -1104,12 +638,12 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                       children: [
                         // Show total count with selected category
                         Container(
-                          margin: EdgeInsets.only(right: 20.0, bottom: 20.0),
+                          margin: EdgeInsets.only(bottom: 20.0),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.restaurant,
-                                size: 16,
+                                size: 18,
                                 color: Colors.green,
                               ),
                               SizedBox(width: 8),
@@ -1120,177 +654,6 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                             ],
                           ),
                         ),
-
-                        // Horizontal scroll for featured items (top 5 nearest)
-                        Container(
-                          height: 290,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _getFilteredFoodItems().length > 5
-                                ? 5
-                                : _getFilteredFoodItems().length,
-                            itemBuilder: (context, index) {
-                              var data = _getFilteredFoodItems()[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          FoodItemDetails(foodData: data),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  margin: EdgeInsets.only(right: 15.0),
-                                  width: 200,
-                                  child: Material(
-                                    elevation: 5.0,
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Container(
-                                      padding: EdgeInsets.all(14),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          // Category and Nearest badges
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              // Food type badge
-                                              Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                  vertical: 4,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: _getFoodTypeColor(
-                                                    data['foodType'],
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: Text(
-                                                  data['foodType'] ?? 'Unknown',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                              // Nearest badge for first item
-                                              if (index == 0)
-                                                Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.green,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                  ),
-                                                  child: Text(
-                                                    "NEAREST",
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 9,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 8),
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                            child: Container(
-                                              height: 120,
-                                              width: double.infinity,
-                                              child:
-                                                  data['images'] != null &&
-                                                      data['images'].isNotEmpty
-                                                  ? Image.network(
-                                                      data['images'][0],
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder:
-                                                          (
-                                                            context,
-                                                            error,
-                                                            stackTrace,
-                                                          ) {
-                                                            return Container(
-                                                              color: Colors
-                                                                  .grey[200],
-                                                              child: Icon(
-                                                                Icons
-                                                                    .restaurant,
-                                                                size: 40,
-                                                                color: Colors
-                                                                    .grey[400],
-                                                              ),
-                                                            );
-                                                          },
-                                                    )
-                                                  : Container(
-                                                      color: Colors.grey[200],
-                                                      child: Icon(
-                                                        Icons.restaurant,
-                                                        size: 40,
-                                                        color: Colors.grey[400],
-                                                      ),
-                                                    ),
-                                            ),
-                                          ),
-                                          SizedBox(height: 8),
-                                          Text(
-                                            data['name'] ?? 'Unknown Item',
-                                            style:
-                                                AppWidget.semiBoldTextFeildStyle(),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          SizedBox(height: 5.0),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.location_on,
-                                                size: 14,
-                                                color: Colors.red,
-                                              ),
-                                              SizedBox(width: 4),
-                                              Expanded(
-                                                child: Text(
-                                                  "${data['distance'].toStringAsFixed(1)} km away",
-                                                  style:
-                                                      AppWidget.LightTextFeildStyle(),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 5.0),
-                                          Text(
-                                            "₹${data['price']?.toStringAsFixed(0) ?? '0'}",
-                                            style:
-                                                AppWidget.semiBoldTextFeildStyle(),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        SizedBox(height: 30.0),
 
                         // Vertical list for all items
                         ListView.builder(
@@ -1310,26 +673,34 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                                 );
                               },
                               child: Container(
-                                margin: EdgeInsets.only(
-                                  right: 20.0,
-                                  bottom: 20.0,
-                                ),
+                                margin: EdgeInsets.only(bottom: 16.0),
                                 child: Material(
-                                  elevation: 5.0,
-                                  borderRadius: BorderRadius.circular(20),
+                                  elevation: 3.0,
+                                  borderRadius: BorderRadius.circular(16),
+                                  color: Colors.white,
                                   child: Container(
-                                    padding: EdgeInsets.all(10),
+                                    padding: EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Colors.grey[200]!,
+                                        width: 1,
+                                      ),
+                                    ),
                                     child: Row(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(
-                                            10,
+                                            12,
                                           ),
                                           child: Container(
-                                            height: 120,
-                                            width: 120,
+                                            height: 100,
+                                            width: 100,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[100],
+                                            ),
                                             child:
                                                 data['images'] != null &&
                                                     data['images'].isNotEmpty
@@ -1364,20 +735,26 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                                                   ),
                                           ),
                                         ),
-                                        SizedBox(width: 20.0),
+                                        SizedBox(width: 16.0),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
                                                 children: [
                                                   Expanded(
                                                     child: Text(
                                                       data['name'] ??
                                                           'Unknown Item',
                                                       style:
-                                                          AppWidget.semiBoldTextFeildStyle(),
+                                                          AppWidget.semiBoldTextFeildStyle()
+                                                              .copyWith(
+                                                                fontSize: 16,
+                                                              ),
                                                     ),
                                                   ),
                                                   Row(
@@ -1386,8 +763,8 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                                                       Container(
                                                         padding:
                                                             EdgeInsets.symmetric(
-                                                              horizontal: 6,
-                                                              vertical: 2,
+                                                              horizontal: 8,
+                                                              vertical: 4,
                                                             ),
                                                         decoration: BoxDecoration(
                                                           color:
@@ -1396,7 +773,7 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                                                               ),
                                                           borderRadius:
                                                               BorderRadius.circular(
-                                                                8,
+                                                                10,
                                                               ),
                                                         ),
                                                         child: Text(
@@ -1404,25 +781,25 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                                                               'Unknown',
                                                           style: TextStyle(
                                                             color: Colors.white,
-                                                            fontSize: 8,
+                                                            fontSize: 10,
                                                             fontWeight:
                                                                 FontWeight.bold,
                                                           ),
                                                         ),
                                                       ),
-                                                      SizedBox(width: 5),
+                                                      SizedBox(width: 6),
                                                       if (index == 0)
                                                         Container(
                                                           padding:
                                                               EdgeInsets.symmetric(
-                                                                horizontal: 6,
-                                                                vertical: 2,
+                                                                horizontal: 8,
+                                                                vertical: 4,
                                                               ),
                                                           decoration: BoxDecoration(
                                                             color: Colors.green,
                                                             borderRadius:
                                                                 BorderRadius.circular(
-                                                                  8,
+                                                                  10,
                                                                 ),
                                                           ),
                                                           child: Text(
@@ -1430,7 +807,7 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                                                             style: TextStyle(
                                                               color:
                                                                   Colors.white,
-                                                              fontSize: 8,
+                                                              fontSize: 10,
                                                               fontWeight:
                                                                   FontWeight
                                                                       .bold,
@@ -1441,29 +818,33 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: 5.0),
+                                              SizedBox(height: 8.0),
                                               Text(
                                                 data['description'] ??
                                                     'No description available',
                                                 style:
-                                                    AppWidget.LightTextFeildStyle(),
+                                                    AppWidget.LightTextFeildStyle()
+                                                        .copyWith(fontSize: 13),
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
                                               ),
-                                              SizedBox(height: 5.0),
+                                              SizedBox(height: 8.0),
                                               Row(
                                                 children: [
                                                   Icon(
                                                     Icons.location_on,
                                                     size: 16,
-                                                    color: Colors.red,
+                                                    color: Colors.redAccent,
                                                   ),
                                                   SizedBox(width: 4),
                                                   Expanded(
                                                     child: Text(
                                                       "${data['distance'].toStringAsFixed(1)} km • ${data['vendorLocation'] ?? 'Unknown Location'}",
                                                       style:
-                                                          AppWidget.LightTextFeildStyle(),
+                                                          AppWidget.LightTextFeildStyle()
+                                                              .copyWith(
+                                                                fontSize: 12,
+                                                              ),
                                                       maxLines: 1,
                                                       overflow:
                                                           TextOverflow.ellipsis,
@@ -1471,7 +852,7 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: 5.0),
+                                              SizedBox(height: 8.0),
                                               Row(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment
@@ -1480,7 +861,12 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
                                                   Text(
                                                     "₹${data['price']?.toStringAsFixed(0) ?? '0'}",
                                                     style:
-                                                        AppWidget.semiBoldTextFeildStyle(),
+                                                        AppWidget.semiBoldTextFeildStyle()
+                                                            .copyWith(
+                                                              fontSize: 16,
+                                                              color: Colors
+                                                                  .black87,
+                                                            ),
                                                   ),
                                                   Text(
                                                     "From ${data['locationSource']}",
@@ -1510,8 +896,28 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
       ),
     );
   }
+}
 
-  Color _getFoodTypeColor(String? foodType) {
+Icon _getCategoryIcon(String foodType) {
+  switch (foodType.toLowerCase()) {
+    case 'all':
+      return const Icon(Icons.restaurant_menu, color: Colors.deepOrange, size: 32);
+    case 'vegetarian':
+      return const Icon(Icons.eco, color: Colors.green, size: 32);
+    case 'non-vegetarian':
+      return const Icon(Icons.set_meal, color: Colors.red, size: 32);
+    case 'vegan':
+      return const Icon(Icons.spa, color: Colors.lightGreen, size: 32);
+    case 'beverages':
+      return const Icon(Icons.local_cafe, color: Colors.blue, size: 32);
+    case 'desserts':
+      return const Icon(Icons.cake, color: Colors.purple, size: 32);
+    default:
+      return const Icon(Icons.restaurant_menu, color: Colors.deepOrange, size: 32);
+  }
+}
+
+Color _getFoodTypeColor(String? foodType) {
   switch (foodType?.toLowerCase()) {
     case 'vegetarian':
       return Colors.green;
@@ -1525,134 +931,5 @@ class _FoodItemsPageState extends State<FoodItemsPage> {
       return Colors.purple;
     default:
       return Colors.grey;
-  }
-}
-
-  Widget showItem() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        GestureDetector(
-          onTap: () {
-            icecream = true;
-            pizza = false;
-            salad = false;
-            burger = false;
-            setState(() {});
-            if (_currentPosition != null) {
-              _loadFoodItemsWithDistance();
-            }
-          },
-          child: Material(
-            elevation: 5.0,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: icecream ? Colors.black : Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: EdgeInsets.all(8),
-              child: Image.asset(
-                "assets/images/ice-cream.png",
-                height: 40,
-                width: 40,
-                fit: BoxFit.cover,
-                color: icecream ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            icecream = false;
-            pizza = true;
-            salad = false;
-            burger = false;
-            setState(() {});
-            if (_currentPosition != null) {
-              _loadFoodItemsWithDistance();
-            }
-          },
-          child: Material(
-            elevation: 5.0,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: pizza ? Colors.black : Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: EdgeInsets.all(8),
-              child: Image.asset(
-                "assets/images/pizza.png",
-                height: 40,
-                width: 40,
-                fit: BoxFit.cover,
-                color: pizza ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            icecream = false;
-            pizza = false;
-            salad = true;
-            burger = false;
-            setState(() {});
-            if (_currentPosition != null) {
-              _loadFoodItemsWithDistance();
-            }
-          },
-          child: Material(
-            elevation: 5.0,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: salad ? Colors.black : Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: EdgeInsets.all(8),
-              child: Image.asset(
-                "assets/images/salad.png",
-                height: 40,
-                width: 40,
-                fit: BoxFit.cover,
-                color: salad ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            icecream = false;
-            pizza = false;
-            salad = false;
-            burger = true;
-            setState(() {});
-            if (_currentPosition != null) {
-              _loadFoodItemsWithDistance();
-            }
-          },
-          child: Material(
-            elevation: 5.0,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: burger ? Colors.black : Colors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: EdgeInsets.all(8),
-              child: Image.asset(
-                "assets/images/burger.png",
-                height: 40,
-                width: 40,
-                fit: BoxFit.cover,
-                color: burger ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

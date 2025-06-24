@@ -2,10 +2,8 @@
 
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:emerge_homely/pages/details.dart';
 import 'package:emerge_homely/pages/home/foodlisting.dart';
-import 'package:emerge_homely/pages/wallet.dart';
-import 'package:emerge_homely/widget/widget_support.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
